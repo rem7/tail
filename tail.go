@@ -179,7 +179,6 @@ func (t *Tail) watchFile(ctx context.Context, path string) {
 				if err != nil && err != io.EOF {
 					log.WithField("file", path).Error(err.Error())
 					break
-
 				}
 
 				if len(line) > 0 {

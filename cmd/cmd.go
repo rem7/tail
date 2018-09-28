@@ -6,7 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  */
-package main
+package main // import "github.com/rem7/gotail"
 
 // Sample program using tail library
 
@@ -14,7 +14,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"regexp"
 	"sync"
 	"unicode/utf8"
 
@@ -28,7 +27,7 @@ func main() {
 		os.Exit(-1)
 	}
 
-	fls := regexp.MustCompile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}-\d{2}:\d{2}\s`)
+	// fls := regexp.MustCompile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}-\d{2}:\d{2}\s`)
 
 	var wg sync.WaitGroup
 	files := os.Args[1:]
@@ -36,16 +35,20 @@ func main() {
 		wg.Add(1)
 		go func(path string) {
 
-			t := tail.NewTailWithCtx(context.Background(), path, false, true, fls, true, false)
-
+			t := tail.NewTailWithCtx(context.Background(), path, true, true, nil, false, false)
 			n := 1
+
 			for {
-				line := <-t.LineChan
+				line, open := <-t.LineChan
+				if !open {
+					break
+				}
 				if ok := utf8.ValidString(line); !ok {
 					fmt.Print("line %d not UTF-8: ", n)
 				}
 				fmt.Println(line)
 				n += 1
+
 			}
 			wg.Done()
 		}(file)
