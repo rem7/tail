@@ -1,4 +1,4 @@
-module github.com/rem7/tail
+module github.com/rem7/tail/v2
 
 require (
 	github.com/sirupsen/logrus v1.0.6
