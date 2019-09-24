@@ -44,10 +44,9 @@ type Tail struct {
 	SeekToEnd      bool
 }
 
-func NewTail(path string) *Tail {
+func NewTailer(ctx context.Context, path string, options ...func(*Tail) error) *Tail {
 
-	ctx, cancel := context.WithCancel(context.Background())
-
+	ctx, cancel := context.WithCancel(ctx)
 	t := &Tail{
 		Filename:       path,
 		LineChan:       make(chan string),
@@ -60,36 +59,60 @@ func NewTail(path string) *Tail {
 		SeekToEnd:      false,
 	}
 
-	return t
-}
-
-func (t *Tail) Start() {
-	go t.watchFile(t.Context, t.Filename)
-}
-
-func NewTailWithCtx(ctx context.Context, path string, follow, retryFileOpen bool, delim *regexp.Regexp, lineStartSplit bool, skipToEnd bool) *Tail {
-
-	ctx, cancel := context.WithCancel(ctx)
-
-	d := gDelim
-	if delim != nil {
-		d = delim
-	}
-
-	t := &Tail{
-		Filename:       path,
-		LineChan:       make(chan string),
-		Cancel:         cancel,
-		Follow:         follow,
-		Context:        ctx,
-		RetryFileOpen:  retryFileOpen,
-		lineStartSplit: lineStartSplit,
-		delim:          d,
-		SeekToEnd:      skipToEnd,
+	for _, option := range options {
+		err := option(t)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	t.Start()
 	return t
+}
+
+// SplitAtLineStart if true it will skip to the begining of the line
+// instead of the end.
+func SplitAtLineStart(b bool) func(*Tail) error {
+	return func(t *Tail) error {
+		t.lineStartSplit = b
+		return nil
+	}
+}
+
+// Follow if true it will continue to follow the file as lines are added
+func Follow(b bool) func(*Tail) error {
+	return func(t *Tail) error {
+		t.Follow = b
+		return nil
+	}
+}
+
+// RetryFileOpen if the file is closed, keep trying
+func RetryFileOpen(b bool) func(*Tail) error {
+	return func(t *Tail) error {
+		t.RetryFileOpen = b
+		return nil
+	}
+}
+
+// SetSeekToEnd if true it will skip to the end and not tail from the begining
+func SetSeekToEnd(b bool) func(*Tail) error {
+	return func(t *Tail) error {
+		t.SeekToEnd = b
+		return nil
+	}
+}
+
+// SetDelimeter takes a regexp for the tailer to break the line
+func SetDelimeter(d *regexp.Regexp) func(*Tail) error {
+	return func(t *Tail) error {
+		t.delim = d
+		return nil
+	}
+}
+
+func (t *Tail) Start() {
+	go t.watchFile(t.Context, t.Filename)
 }
 
 func (t *Tail) Close() {
