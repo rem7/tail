@@ -6,7 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  */
-package main // import "github.com/rem7/gotail"
+package main
 
 // Sample program using tail library
 
@@ -17,7 +17,7 @@ import (
 	"sync"
 	"unicode/utf8"
 
-	"github.com/rem7/tail"
+	"github.com/rem7/tail/v2"
 )
 
 func main() {
@@ -35,7 +35,12 @@ func main() {
 		wg.Add(1)
 		go func(path string) {
 
-			t := tail.NewTailWithCtx(context.Background(), path, true, true, nil, false, false)
+			t := tail.NewTailer(context.Background(), path,
+				tail.Follow(true),
+				tail.RetryFileOpen(true),
+				tail.SplitAtLineStart(false),
+				tail.SetSeekToEnd(false),
+			)
 			n := 1
 
 			for {
