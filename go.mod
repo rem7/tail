@@ -6,3 +6,5 @@ require (
 	golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e
 	gopkg.in/fsnotify.v1 v1.4.7
 )
+
+go 1.13
